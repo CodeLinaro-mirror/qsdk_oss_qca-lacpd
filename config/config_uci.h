@@ -52,6 +52,7 @@ enum {
 
 enum {
 	LACP_PORT_ATTR_ENABLE,
+	LACP_PORT_ATTR_IFNAME,
 	LACP_PORT_ATTR_LACP,
 	LACP_PORT_ATTR_SWITCH,
 	LACP_PORT_ATTR_SWITCH_PORT_ID,
@@ -82,6 +83,7 @@ struct lacpd_uci_configuration_port {
 	struct list_head node;				/*Linked to "struct lacpd_uci_configuration_switch" ->ports*/
 
 	struct lacpd_uci_configuration_switch *sw;	/*associated switch*/
+	char ifname[LACPD_CONFIG_SYS_NAME_SIZE];	/*Name for exported switch port, such as eth2*/
 	uint32_t port_num;				/*Mapped switch hardware port number*/
 	uint32_t user_key;				/*User define key. Different user key will create different aggregation group in switch*/
 };
