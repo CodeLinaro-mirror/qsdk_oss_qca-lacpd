@@ -1219,4 +1219,6 @@ lacpd_error_exit:
 	lacpd_status_exit();
 
 	uloop_done();
+
+	return 0;
 }
