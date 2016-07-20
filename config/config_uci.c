@@ -168,8 +168,13 @@ static bool lacpd_uci_cfg_parse_port_section(struct uci_section *s)
 	}
 
 	if (tb[LACP_PORT_ATTR_IFNAME]) {
-		snprintf(sw_port_cfg->ifname, sizeof(sw_port_cfg->ifname), "%s", blobmsg_get_string(tb[LACP_PORT_ATTR_IFNAME]));
+		char *ifname = blobmsg_get_string(tb[LACP_PORT_ATTR_IFNAME]);
+
+		if (ifname) {
+			snprintf(sw_port_cfg->ifname, sizeof(sw_port_cfg->ifname), "%s", ifname);
+		}
 	}
+
 	sw_port_cfg->sw = sw_cfg;
 	sw_port_cfg->port_num = blobmsg_get_u32(tb[LACP_PORT_ATTR_SWITCH_PORT_ID]);
 	sw_port_cfg->user_key = tb[LACP_PORT_ATTR_USER_KEY] ? blobmsg_get_u32(tb[LACP_PORT_ATTR_USER_KEY]) : LACPD_USER_KEY_DEFAULT;

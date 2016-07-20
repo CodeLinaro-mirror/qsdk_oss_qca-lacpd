@@ -395,13 +395,13 @@ static enum qca_sw_pkt_type qca_switch_pkt_type_parse(uint8_t *buf, uint32_t buf
  */
 static int qca_switch_calculate_dest_port_in_agg(struct qca_switch_system *qca_sw, struct switch_port *agg, uint8_t *buf)
 {
-	int idx, ports[QCA_SW_MAX_MEMBERS_IN_AGG], ports_cnt = 0;
+	int idx, ports[QCA_SW_PORT_NUM], ports_cnt = 0;
 	uint8_t mac_hash = 0;
 
 	/*
 	 * Init trunk members
 	 */
-	for (idx = 0; idx < QCA_SW_MAX_MEMBERS_IN_AGG; idx++) {
+	for (idx = 0; idx < QCA_SW_PORT_NUM; idx++) {
 		ports[idx] = -1;
 	}
 
