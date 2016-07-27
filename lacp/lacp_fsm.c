@@ -631,6 +631,10 @@ static bool lacpd_fsm_selection_logic_cond_to_SELECTED(struct state_machine *st)
 	struct lacpd_port *port = (struct lacpd_port *)st->master;
 	struct state_machine *mux_st = lacpd_port_state_machine_get(port, LACPD_PORT_STATE_MACHINE_MUX);
 
+	if (!mux_st) {
+		return false;
+	}
+
 	return (st->state == LACPD_SELECT_LOGIC_ST_UNSELECTED) && (mux_st->state == LACPD_MUX_ST_DETACHED);
 }
 
@@ -1038,8 +1042,13 @@ static bool lacpd_fsm_transmit_cond_to_NO_TX(struct state_machine *st)
 {
 	struct lacpd_port *port = (struct lacpd_port *)st->master;
 	struct state_machine *periodic_st = lacpd_port_state_machine_get(port, LACPD_PORT_STATE_MACHINE_PERIODIC);
+	bool from_DISABLED_to_NO_TX;
 
-	bool from_DISABLED_to_NO_TX = (st->state == LACPD_TRANSMIT_ST_DISABLED) &&
+	if (!periodic_st) {
+		return false;
+	}
+
+	from_DISABLED_to_NO_TX = (st->state == LACPD_TRANSMIT_ST_DISABLED) &&
 					(periodic_st->state != LACPD_PERIODIC_ST_NO_PERIODIC) &&
 					port->lacp_enabled;
 	return (st->state == LACPD_TRANSMIT_ST_TX) || from_DISABLED_to_NO_TX;
@@ -1053,6 +1062,10 @@ static bool lacpd_fsm_transmit_cond_to_TX(struct state_machine *st)
 	struct lacpd_state_machine_transmit *lacp_st= container_of(st, struct lacpd_state_machine_transmit, base);
 	struct lacpd_port *port = (struct lacpd_port *)st->master;
 	struct state_machine *periodic_st = lacpd_port_state_machine_get(port, LACPD_PORT_STATE_MACHINE_PERIODIC);
+
+	if (!periodic_st) {
+		return false;
+	}
 
 	return (st->state == LACPD_TRANSMIT_ST_NO_TX) &&
 		port->ntt &&
@@ -1068,6 +1081,10 @@ static bool lacpd_fsm_transmit_cond_to_DISABLED(struct state_machine *st)
 {
 	struct lacpd_port *port = (struct lacpd_port *)st->master;
 	struct state_machine *periodic_st = lacpd_port_state_machine_get(port, LACPD_PORT_STATE_MACHINE_PERIODIC);
+
+	if (!periodic_st) {
+		return false;
+	}
 
 	return (st->state != LACPD_TRANSMIT_ST_DISABLED) &&
 		((periodic_st->state == LACPD_PERIODIC_ST_NO_PERIODIC) || !port->lacp_enabled);

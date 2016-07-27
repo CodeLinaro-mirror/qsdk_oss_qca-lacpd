@@ -54,6 +54,7 @@ const struct uci_blob_param_list lacp_attr_list = {
 
 static const struct blobmsg_policy lacp_port_attrs[LACP_PORT_ATTR_MAX] = {
 	[LACP_PORT_ATTR_ENABLE] = { .name = "enable", .type = BLOBMSG_TYPE_BOOL },
+	[LACP_PORT_ATTR_IFNAME] = { .name = "ifname", .type = BLOBMSG_TYPE_STRING },
 	[LACP_PORT_ATTR_LACP] = { .name = "lacp", .type = BLOBMSG_TYPE_STRING },
 	[LACP_PORT_ATTR_SWITCH] = { .name = "switch", .type = BLOBMSG_TYPE_STRING },
 	[LACP_PORT_ATTR_SWITCH_PORT_ID] = { .name = "switchPortId", .type = BLOBMSG_TYPE_INT32 },
@@ -164,6 +165,14 @@ static bool lacpd_uci_cfg_parse_port_section(struct uci_section *s)
 	if (!sw_port_cfg) {
 		blob_buf_free(&bf);
 		return false;
+	}
+
+	if (tb[LACP_PORT_ATTR_IFNAME]) {
+		char *ifname = blobmsg_get_string(tb[LACP_PORT_ATTR_IFNAME]);
+
+		if (ifname) {
+			snprintf(sw_port_cfg->ifname, sizeof(sw_port_cfg->ifname), "%s", ifname);
+		}
 	}
 
 	sw_port_cfg->sw = sw_cfg;
@@ -412,7 +421,12 @@ static bool lacpd_uci_cfg_init(struct lacpd_cfg_sys_init_params *param)
 		}
 
 		list_for_each_entry(sw_port_cfg, &lacp_cfg->ports, node) {
-			snprintf(port_name, sizeof(port_name), "%s.port%d", sw_port_cfg->sw->ifname, sw_port_cfg->port_num);
+			if (strlen(sw_port_cfg->ifname)) {
+				snprintf(port_name, sizeof(port_name), "%s.%s", sw_port_cfg->sw->ifname, sw_port_cfg->ifname);
+			} else {
+				snprintf(port_name, sizeof(port_name), "%s.port%d", sw_port_cfg->sw->ifname, sw_port_cfg->port_num);
+			}
+
 			lacp_port_param.user_key = sw_port_cfg->user_key;
 
 			if (!user->add_dev(lacp_cfg->name, port_name, &lacp_port_param)){
