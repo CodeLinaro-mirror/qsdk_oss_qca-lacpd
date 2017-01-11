@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,9 @@
 struct lacpd_wrapper __lacpd_wrapper;
 
 unsigned int debug_mask[DBG_MOD_MAX];
+
+#define STATIC_SIZE_CHECK(exp_true)	\
+	extern char (*ct_assert(void)) [sizeof(char[1 - 2*!(exp_true)])]
 
 /*
  *Internal function declaration, start
@@ -583,11 +586,7 @@ static bool lacpd_cfg_lacp_new(const char *name, struct lacpd_cfg_lacp_parameter
 	snprintf(inst->name, sizeof(inst->name), "%s", name);
 	inst->lacp_param = *param;
 
-	if(!lacpd_wrapper_add(inst)) {
-		free(inst);
-		DP(WRAPPER, CRIT, "Failed to add wrapper %s", name);
-		return false;
-	}
+	lacpd_wrapper_add(inst);
 
 	DP(WRAPPER, INFO, "Add wrapper %s successful", name);
 	return true;
@@ -1119,23 +1118,18 @@ static void lacpd_config_exit(void)
 	}
 }
 
-static bool lacpd_os_service_init(void)
-{
-	if (GENL_OS_SERVICE_PRIVATE_DATA_SIZE < sizeof(struct uloop_fd) ||
-		GENL_OS_SERVICE_PRIVATE_DATA_SIZE < sizeof(struct uloop_timeout) ||
-		GENL_OS_SERVICE_PRIVATE_DATA_SIZE < sizeof(struct uloop_process)) {
-		DP(WRAPPER, CRIT, "Memory for private data of general OS service is not enough");
-		return false;
-	}
+STATIC_SIZE_CHECK(GENL_OS_SERVICE_PRIVATE_DATA_SIZE >= sizeof(struct uloop_fd));
+STATIC_SIZE_CHECK(GENL_OS_SERVICE_PRIVATE_DATA_SIZE >= sizeof(struct uloop_timeout));
+STATIC_SIZE_CHECK(GENL_OS_SERVICE_PRIVATE_DATA_SIZE >= sizeof(struct uloop_process));
 
+static void lacpd_os_service_init(void)
+{
 	__lacpd_wrapper.os_service.fd_add = lacpd_wrapper_os_service_fd_add;
 	__lacpd_wrapper.os_service.fd_del = lacpd_wrapper_os_service_fd_del;
 	__lacpd_wrapper.os_service.timer_set = lacpd_wrapper_os_service_timer_set;
 	__lacpd_wrapper.os_service.timer_cancel = lacpd_wrapper_os_service_timer_cancel;
 	__lacpd_wrapper.os_service.task_add = lacpd_wrapper_os_service_task_add;
 	__lacpd_wrapper.os_service.task_del = lacpd_wrapper_os_service_task_del;
-
-	return true;
 }
 
 static void lacpd_handle_signal(int signo)
@@ -1180,9 +1174,7 @@ int main(int argc, char **argv)
 
 	lacpd_debug_init();
 
-	if (!lacpd_os_service_init()) {
-		return -1;
-	}
+	lacpd_os_service_init();
 
 	lacpd_setup_signals();
 
