@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -700,14 +700,6 @@ static bool qca_sw_agg_id_is_active(struct qca_switch_system *qca_sw, uint32_t a
 }
 
 /*
- * qca_switch_load_runtime_ports : load all switch ports from "/tmp/qca_switch_ports"
- */
-static bool qca_switch_load_runtime_ports(struct qca_switch_system *qca_sw)
-{
-	return false;
-}
-
-/*
  * qca_switch_load_ports : load all switch ports from configuration file
  */
 static bool qca_switch_load_ports(struct qca_switch_system *qca_sw)
@@ -716,7 +708,8 @@ static bool qca_switch_load_ports(struct qca_switch_system *qca_sw)
 	struct general_device_switch_system *sw_sys = &qca_sw->base;
 	int num_of_words = qca_switch_shell_cmd_get_word_list(sw_sys->name, "get_switch_ports", ports_desc, (QCA_SW_WORDS_PER_PORT * QCA_SW_PORT_NUM));
 	char *sw_name, *ctrl_ch, *data_ch, port_name[GENERAL_DEVICE_SYSTEM_NAME_SIZE];
-	uint32_t idx, port_num, switch_port_obj, netdev_obj;
+	int32_t port_num;
+	uint32_t idx, switch_port_obj, netdev_obj;
 	struct switch_port *port;
 
 	for (idx = 0; (idx + QCA_SW_WORDS_PER_PORT) <= num_of_words; idx += QCA_SW_WORDS_PER_PORT) {
@@ -758,7 +751,7 @@ static bool qca_switch_load_ports(struct qca_switch_system *qca_sw)
 		switch_port_obj = qca_sw->port_domain + port_num;
 		snprintf(port_name, sizeof(port_name), "%s.%s", ctrl_ch, ports_desc[idx + QCA_SW_PORT_DESC_PT_NAME]);
 
-		port = genl_dev_sw_port_create(sw_sys, port_name, port_num, switch_port_obj, ctrl_ch, data_ch);
+		port = genl_dev_sw_port_create(sw_sys, port_name, (uint32_t)port_num, switch_port_obj, ctrl_ch, data_ch);
 		if (!port) {
 			DP(GENL_DEVICE, CRIT, "Create switch port %s failed", port_name);
 			return false;
@@ -1334,7 +1327,7 @@ static bool qca_switch_init(struct general_device_switch_system *sw_sys)
 	qca_sw->mirror_port = qca_switch_shell_cmd_get_int(sw_sys->name, "get_mirror_port");
 	qca_sw->private_hdr_type = qca_switch_shell_cmd_get_int(sw_sys->name, "get_private_header_type");
 
-	return qca_switch_load_runtime_ports(qca_sw) || qca_switch_load_ports(qca_sw);
+	return qca_switch_load_ports(qca_sw);
 }
 
 /*
